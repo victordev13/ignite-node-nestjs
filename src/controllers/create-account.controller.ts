@@ -9,6 +9,7 @@ import {
 import { z } from 'zod'
 import { PrismaService } from 'src/infra/database/prisma/prisma.service'
 import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe'
+import { hash } from 'bcryptjs'
 
 const createAccountBodySchema = z.object({
   name: z.string(),
@@ -18,7 +19,7 @@ const createAccountBodySchema = z.object({
 
 type CreateAccountBodySchemaType = z.infer<typeof createAccountBodySchema>
 
-@Controller('/accounts')
+@Controller('/accounts/create')
 export class CreateAccountController {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -36,8 +37,10 @@ export class CreateAccountController {
       throw new ConflictException('User with same email already exists')
     }
 
+    const hashedPassword = await hash(password, 8)
+
     await this.prisma.user.create({
-      data: { name, email, password },
+      data: { name, email, password: hashedPassword },
     })
   }
 }
